@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload MRI Image</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .upload-container h1 {
+            color: #1A76D1;
+            margin-bottom: 20px;
+        }
+        .upload-container p {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .upload-container input[type="file"] {
+            display: none;
+        }
+        .upload-container label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #1A76D1;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .upload-container label:hover {
+            background: #2C2D3F;
+        }
+        .upload-container .image-preview {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .upload-container .image-preview img {
+            max-width: 48%;
+            border-radius: 5px;
+        }
+        .upload-container .feedback-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #1A76D1;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-container .feedback-button:hover {
+            background: #2C2D3F;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>Upload MRI Image</h1>
+        <p>Please upload your MRI image for preprocessing.</p>
+        <label for="file-upload">Choose Image</label>
+     <input type="file" id="file-upload" name="file" accept="image/*">
+
+        <div class="image-preview" id="image-preview"></div>
+        <button class="feedback-button" onclick="window.location.href='/signin'">Give Feedback</button>
+    </div>
+
+    <script>
+    document.getElementById('file-upload').addEventListener('change', async function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imagePreview = document.getElementById('image-preview');
+            imagePreview.innerHTML = ''; // Clear previous images
+
+            // Display the original image
+            const originalImage = document.createElement('img');
+            originalImage.src = e.target.result;
+            originalImage.alt = "Original Image";
+            imagePreview.appendChild(originalImage);
+        };
+        reader.readAsDataURL(file);
+
+        // Prepare form data and send the file to Flask
+        const formData = new FormData();
+        formData.append('file', file);  // This is the key name you're using in Flask ('file')
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to upload image');
+            }
+
+            const blob = await response.blob();
+            const preprocessedImageUrl = URL.createObjectURL(blob);
+
+            // Display the preprocessed image
+            const preprocessedImage = document.createElement('img');
+            preprocessedImage.src = preprocessedImageUrl;
+            preprocessedImage.alt = "Preprocessed Image";
+            document.getElementById('image-preview').appendChild(preprocessedImage);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+});
+
+    </script>
+</body>
+</html>
