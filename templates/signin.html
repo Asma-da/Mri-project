@@ -5,52 +5,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Sign Up</title>
+    <title>Sign In</title>
 
     <!-- Font Icon -->
-    <link rel="stylesheet"
-        href="{{ url_for('static', filename= 'fonts/material-icon/css/material-design-iconic-font.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/material-icon/css/material-design-iconic-font.min.css') }}">
 
     <!-- Main css -->
-    <link rel="stylesheet" href="..\static\css\signin_signup.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signin_signup.css') }}">
 </head>
 
 <body>
 
     <div class="main">
-      
         <section class="sign-in">
             <div class="container">
                 <div class="signin-content">
                     <div class="signin-image">
-                        <figure><img src="..\static\images\signin-image.jpg"
-                                alt="sing up image"></figure>
+                        <figure><img src="{{ url_for('static', filename='images/signin-image.jpg') }}" alt="sign in image"></figure>
                     </div>
 
-                    <div  class="signin-form">
+                    <div class="signin-form">
                         <h2 class="form-title">Sign In</h2>
                         <div style="margin-bottom:10px">
-                            <label class="label-agree-term error_message" style="color: red;display: none;"></label>
+                            <label class="label-agree-term error_message" style="color: red; display: none;"></label>
                         </div>
-                        <form action="/signin" method="POST" class="register-form" id="login-form">
+                        <!-- Prevent default form submission -->
+                        <form class="register-form" id="login-form" onsubmit="login(event)">
                             <div class="form-group">
-                                <label id="your_email"><i class="zmdi zmdi-account material-icons-name"></i></label>
-                                <input type="text" name="email" id="email" placeholder="Email" />
+                                <label for="email"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" name="email" id="email" placeholder="Email" required />
                             </div>
                             <div class="form-group">
-                                <label for="your_pass"><i class="zmdi zmdi-lock"></i></label>
-                                <input type="password" name="pass" id="pass" placeholder="Password" />
+                                <label for="pass"><i class="zmdi zmdi-lock"></i></label>
+                                <input type="password" name="pass" id="pass" placeholder="Password" required />
                             </div>
-                            
+
                             <div class="form-button">
-                                <input type="button" name="signin" id="signin" class="form-submit" onclick="login();" value="Log in" />
+                                <input type="submit" name="signin" id="signin" class="form-submit" value="Log in" />
                             </div>
                             <div style="margin-top:5px;">
-                                <label class="label-agree-term" id="login_message" style="color: green;display: none;"></label>
+                                <label class="label-agree-term" id="login_message" style="color: green; display: none;"></label>
                             </div>
                         </form>
                         <div class="social-login">
-                            <a href="/signup" class="signup-image-link">Create an account</a>
+                            <a href="{{ url_for('signup') }}" class="signup-image-link">Create an account</a>
                         </div>
                     </div>
                 </div>
@@ -59,55 +57,50 @@
     </div>
 
     <!-- JS -->
-    <script src="{{ url_for('static', filename= 'vendor/jquery/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename= 'js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
     <script type="text/javascript">
-        
-        function login(){
+        function login(event) {
+    event.preventDefault(); // Prevent page reload
 
-            if (($("#email").val() == "") || ($("#pass").val() == '')){
+    let email = $("#email").val().trim();
+    let password = $("#pass").val().trim();
 
-                $(".error_message").text("All fields are required.");
-                $(".error_message").show(0).delay(3000).hide(0);
+    if (!email || !password) {
+        $(".error_message").text("All fields are required.").fadeIn().delay(3000).fadeOut();
+        return;
+    }
+
+    let credentials = JSON.stringify({
+        email: email,
+        pass: password
+    });
+
+    $.ajax({
+        type: 'POST',
+        url: '/signin',
+        data: credentials,
+        contentType: 'application/json',  // Ensures correct header
+        dataType: 'json',
+        success: function(response) {
+            if (response.status) {
+                $('#login_message').text("Welcome " + response.username + "!").fadeIn().delay(2000).fadeOut();
+                let userType = (response.user_type || 'user').toLowerCase();
+                window.location.href =
+                    userType === 'doctor' ? '/doctor_dashboard' :
+                    userType === 'admin' ? '/admin_dashboard' : '/user_dashboard';
+            } else {
+                $(".error_message").text(response.error || "Login failed").fadeIn().delay(3000).fadeOut();
             }
-            else {
-                var data = new FormData();
-                data.append('email', $("#email").val());
-                data.append('pass', $("#pass").val());
-                $.ajax({
-                    type: 'POST',
-                    enctype: 'multipart/form-data',
-                    url: '/signin',
-                    processData: false,
-                    cache: false,
-                    timeout: 800000,
-                    contentType: false,
-                    data: data,
-                    success: function(response) {
-                        console.log(response);
-                        var data = JSON.parse(response);
-                        if (data['status'] == true){
-                            $('#login_message').text("Welcome " + data['username'] +", Login Successfully.");
-                            $('#login_message').show(0).delay(3000).hide(0);
-                            // Redirect based on the role
-                            if (data.user_type == 'doctor') {
-                                console.log('Redirecting to doctor dashboard');
-                                window.location.href = '/doctor_dashboard';  // Redirect to user dashboard
-                            } else  {
-                                console.log('Redirecting to admin dashboard');
-                                window.location.href = '/admin_dashboard';  // Redirect to doctor dashboard
-                            }
-                        } else{
-                            $(".error_message").text("Incorrect Email and Password.");
-                            $(".error_message").show(0).delay(3000).hide(0);
-                        }
-                    } 
-                });
-            }
+        },
+        error: function(xhr) {
+            let errorMsg = xhr.responseJSON?.error || "Server error";
+            $(".error_message").text(errorMsg).fadeIn().delay(3000).fadeOut();
         }
+    });
+}
 
     </script>
 </body>
-
 </html>

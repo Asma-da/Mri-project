@@ -1,0 +1,305 @@
+<!doctype html>
+<html class="no-js" lang="zxx">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>MediPlus - Admin Dashboard</title>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/icofont.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-dashboard">
+
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="loader">
+            <!-- Your loader animation -->
+        </div>
+    </div>
+
+    <!-- Admin Header -->
+    <header class="header admin-header">
+        <div class="topbar">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-12">
+                        <ul class="top-contact">
+                          <!--  <li><i class="fa fa-dashboard"></i> Admin Dashboard</li>-->
+                        </ul>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-12 text-right">
+                        <ul class="top-contact">
+                            <li style="color : white"><i class="fa fa-user"></i>  {{ session.get('admin_name', 'Admin') }}</li>
+                            <li><a href="{{ url_for('logout') }}"><i class="fa fa-sign-out"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Main Content -->
+    <div class="admin-main">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="admin-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MediPlus">
+            </div>
+            <ul class="admin-menu">
+                <li class="active"><a href="#dashboard"><i class="icofont-dashboard"></i> Dashboard</a></li>
+                <li><a href="#users"><i class="icofont-users"></i> User Management</a></li>
+                <li><a href="#doctors"><i class="icofont-doctor"></i> Doctor Approvals</a></li>
+            </ul>
+        </div>
+
+        <!-- Content Area -->
+        <div class="admin-content">
+            <!-- Dashboard Overview -->
+            <section id="dashboard" class="section">
+                <div class="section-header">
+                    <h2><i class="icofont-dashboard"></i> Dashboard Overview</h2>
+                </div>
+
+                <div class="row stats-grid">
+                    <!-- Stat Card 1 -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="icofont-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.total_users }}</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="icofont-doctor"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.approved_doctors }}</h3>
+                                <p>Verified Doctors</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 3 -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="icofont-doctor"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.pending_doctors }}</h3>
+                                <p>Pending Doctors</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 4 -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="icofont-user"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.regular_users }}</h3>
+                                <p>Regular Users</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section id="users" class="section" style="display:none;">
+                <div class="section-header">
+                    <h2><i class="icofont-users"></i> User Management</h2>
+                </div>
+
+               <div class="table-responsive">
+                    <table class="user-table table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge badge-primary">Admin</span>
+                                    {% elif user.role == 'doctor' %}
+                                        <span class="badge badge-info">Doctor</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">User</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.role == 'doctor' %}
+                                        {% if user.isVerified %}
+                                            <span class="badge badge-success">Verified</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-success">Verified</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.role == 'doctor' %}
+                                        {% if not user.isVerified %}
+                                            <button class="btn btn-sm btn-success" onclick="approveDoctor('{{ user._id }}')">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="rejectDoctor('{{ user._id }}')">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ user._id }}')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        {% endif %}
+                                    {% elif user.role != 'admin' %}
+                                        <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ user._id }}')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-disabled" disabled>
+                                            <i class="fas fa-moon"></i>
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Doctor Approvals Section -->
+            <section id="doctors" class="section" style="display:none;">
+                <div class="section-header">
+                    <h2><i class="icofont-doctor"></i> Pending Doctor Approvals</h2>
+                </div>
+
+                {% set pending_doctors = users|selectattr('role', 'equalto', 'doctor')|selectattr('is_verified', 'equalto', False)|list %}
+                {% if pending_doctors %}
+                <div class="table-responsive">
+                    <table class="doctor-approval-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doctor in pending_doctors %}
+                            <tr>
+                                <td>{{ doctor.name }}</td>
+                                <td>{{ doctor.email }}</td>
+                                <td>
+                                    <button class="btn btn-approve" onclick="approveDoctor('{{ doctor._id }}')">
+                                        Approve
+                                    </button>
+                                    <button class="btn btn-reject" onclick="rejectDoctor('{{ doctor._id }}')">
+                                        Reject
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-pending">
+                    <i class="icofont-check-circled"></i>
+                    <p>No pending doctor approvals</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Admin JavaScript -->
+    <script>
+        // Tab switching
+        $('.admin-menu a').click(function(e) {
+            e.preventDefault();
+            $('.admin-menu li').removeClass('active');
+            $(this).parent().addClass('active');
+            $('section.section').hide();
+            $($(this).attr('href')).show();
+        });
+
+        // Approve doctor
+        function approveDoctor(userId) {
+            if (confirm('Approve this doctor?')) {
+                $.post('approve_doctor/' + userId, function(response) {
+                    if (response.status=="success") {
+                        alert('Doctor approved successfully');
+                        location.reload();
+                    } else {
+                        alert('Failed to approve doctor');
+                    }
+                }).fail(function() {
+                    alert('Error occurred while approving doctor');
+                });
+            }
+        }
+
+        // Reject doctor
+        function rejectDoctor(userId) {
+            if (confirm('Reject this doctor application?')) {
+                $.post('/reject_doctor/' + userId, function(response) {
+                    if (response.status=="success") {
+                        alert('Doctor rejected successfully');
+                        location.reload();
+                    } else {
+                        alert('Failed to reject doctor');
+                    }
+                }).fail(function() {
+                    alert('Error occurred while rejecting doctor');
+                });
+            }
+        }
+
+        // Delete user
+        function deleteUser(userId) {
+            if (confirm('Permanently delete this user?')) {
+                $.post('/delete_user/' + userId, function(response) {
+                    if (response.status="success") {
+                        alert('User deleted successfully');
+                        location.reload();
+                    } else {
+                        alert('Failed to delete user');
+                    }
+                }).fail(function() {
+                    alert('Error occurred while deleting user');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

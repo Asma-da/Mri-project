@@ -1,26 +1,32 @@
+import os
 import cv2
 import numpy as np
 
-def preprocess_image(image_data, target_size=(224, 224)):
-    """
-    Preprocess the MRI image in memory.
-    - Resizes the image to the target size.
-    - Normalizes the image by dividing pixel values by 255.
 
-    Args:
-    - image_data: The image as a NumPy array (grayscale or color).
-    - target_size: The target size for resizing the image (default is 224x224).
+def preprocess_image(image_path, output_path, target_size=(224, 224)):
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Failed to load image: {image_path}")
 
-    Returns:
-    - normalized_image: The preprocessed image (resized and normalized).
-    """
-    if image_data is None:
-        raise ValueError("Image could not be loaded or is empty")
+    # Resize and normalize to [0, 1]
+    img = cv2.resize(img, target_size)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = img.astype(np.float32) / 255.0
 
-    # Resize the image to the target size
-    resized_image = cv2.resize(image_data, target_size)
+    img_uint8 = (img * 255).astype(np.uint8)
+    cv2.imwrite(image_path, cv2.cvtColor(img_uint8, cv2.COLOR_RGB2BGR))  # Convert back to [0,255] for saving
 
-    # Normalize the image by dividing pixel values by 255.0
-    normalized_image = resized_image / 255.0
 
-    return normalized_image
+# Process all images in the dataset
+input_dir = './dataset'
+for label in os.listdir(input_dir):
+    label_dir = os.path.join(input_dir, label)
+    if not os.path.isdir(label_dir):
+        continue
+
+    for img_name in os.listdir(label_dir):
+        if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img_path = os.path.join(label_dir, img_name)
+            preprocess_image(img_path, img_path)  # Overwrite original
+
+print(" Preprocessing complete (images resized to 224x224 and normalized).")
