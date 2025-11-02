@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 ph = PasswordHasher()
 
-app.secret_key = "sEYTK%KF5urhba%m15engfrif"
+app.secret_key = "YOUR SECRET KEY"
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
